@@ -64,7 +64,7 @@ describe("initialization", () => {
     ])
   })
 
-  it("Is initialized!", async () => {
+  it("Initialize recommended", async () => {
     await program.methods
       .recommendedInitialization()
       .accounts({
@@ -74,7 +74,7 @@ describe("initialization", () => {
       .rpc()
   })
 
-  it("Is initialized!", async () => {
+  it("Initialize recommended, expect error", async () => {
     try {
       // Add your test here.
       const tx = await program.methods
