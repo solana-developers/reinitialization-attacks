@@ -73,24 +73,4 @@ describe("initialization", () => {
       .signers([userRecommended])
       .rpc()
   })
-
-  it("Initialize recommended, expect error", async () => {
-    try {
-      // Add your test here.
-      const tx = await program.methods
-        .recommendedInitialization()
-        .accounts({
-          user: userRecommended.publicKey,
-          authority: walletTwo.publicKey,
-        })
-        .transaction()
-      await anchor.web3.sendAndConfirmTransaction(provider.connection, tx, [
-        walletTwo,
-        userRecommended,
-      ])
-    } catch (err) {
-      expect(err)
-      console.log(err)
-    }
-  })
 })

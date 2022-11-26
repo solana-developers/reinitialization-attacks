@@ -13,11 +13,6 @@ pub mod initialization {
         user.serialize(&mut *ctx.accounts.user.data.borrow_mut())?;
         Ok(())
     }
-
-    pub fn recommended_initialization(ctx: Context<Checked>) -> Result<()> {
-        ctx.accounts.user.authority = ctx.accounts.authority.key();
-        Ok(())
-    }
 }
 
 #[derive(Accounts)]
@@ -28,21 +23,7 @@ pub struct Unchecked<'info> {
     authority: Signer<'info>,
 }
 
-#[derive(Accounts)]
-pub struct Checked<'info> {
-    #[account(init, payer = authority, space = 8+32)]
-    user: Account<'info, UserRecommended>,
-    #[account(mut)]
-    authority: Signer<'info>,
-    system_program: Program<'info, System>,
-}
-
 #[derive(BorshSerialize, BorshDeserialize)]
 pub struct UserInsecure {
-    authority: Pubkey,
-}
-
-#[account]
-pub struct UserRecommended {
     authority: Pubkey,
 }
