@@ -63,14 +63,4 @@ describe("initialization", () => {
       walletTwo,
     ])
   })
-
-  it("Initialize recommended", async () => {
-    await program.methods
-      .recommendedInitialization()
-      .accounts({
-        user: userRecommended.publicKey,
-      })
-      .signers([userRecommended])
-      .rpc()
-  })
 })
