@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use borsh::{BorshDeserialize, BorshSerialize};
 
-declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
+declare_id!("CpozUgSwe9FPLy9BLNhY2LTGqLUk1nirUkMMA5RmDw6t");
 
 #[program]
 pub mod initialization {
