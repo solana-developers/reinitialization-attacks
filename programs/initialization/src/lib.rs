@@ -8,7 +8,7 @@ pub mod initialization {
     use super::*;
 
     pub fn insecure_initialization(ctx: Context<Unchecked>) -> Result<()> {
-        let mut user = UserInsecure::try_from_slice(&ctx.accounts.user.data.borrow()).unwrap();
+        let mut user = User::try_from_slice(&ctx.accounts.user.data.borrow()).unwrap();
         user.authority = ctx.accounts.authority.key();
         user.serialize(&mut *ctx.accounts.user.data.borrow_mut())?;
         Ok(())
@@ -23,7 +23,7 @@ pub struct Unchecked<'info> {
     authority: Signer<'info>,
 }
 
-#[derive(BorshSerialize, BorshDeserialize)]
-pub struct UserInsecure {
+#[account]
+pub struct User {
     authority: Pubkey,
 }
