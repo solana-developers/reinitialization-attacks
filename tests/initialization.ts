@@ -42,7 +42,7 @@ describe("initialization", () => {
     )
   })
 
-  it("Initialize insecure", async () => {
+  it("Insecure init", async () => {
     await program.methods
       .insecureInitialization()
       .accounts({
@@ -51,7 +51,7 @@ describe("initialization", () => {
       .rpc()
   })
 
-  it("Initialize insecure again", async () => {
+  it("Re-invoke insecure init with different auth", async () => {
     const tx = await program.methods
       .insecureInitialization()
       .accounts({
@@ -62,5 +62,35 @@ describe("initialization", () => {
     await anchor.web3.sendAndConfirmTransaction(provider.connection, tx, [
       walletTwo,
     ])
+  })
+
+  it("Recommended init", async () => {
+    await program.methods
+      .recommendedInitialization()
+      .accounts({
+        user: userRecommended.publicKey,
+      })
+      .signers([userRecommended])
+      .rpc()
+  })
+
+  it("Re-invoke recommended init with different auth, expect error", async () => {
+    try {
+      // Add your test here.
+      const tx = await program.methods
+        .recommendedInitialization()
+        .accounts({
+          user: userRecommended.publicKey,
+          authority: walletTwo.publicKey,
+        })
+        .transaction()
+      await anchor.web3.sendAndConfirmTransaction(provider.connection, tx, [
+        walletTwo,
+        userRecommended,
+      ])
+    } catch (err) {
+      expect(err)
+      console.log(err)
+    }
   })
 })
