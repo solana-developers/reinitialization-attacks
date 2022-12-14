@@ -42,7 +42,7 @@ describe("initialization", () => {
     )
   })
 
-  it("Initialize insecure", async () => {
+  it("Insecure init", async () => {
     await program.methods
       .insecureInitialization()
       .accounts({
@@ -51,7 +51,7 @@ describe("initialization", () => {
       .rpc()
   })
 
-  it("Initialize insecure again", async () => {
+  it("Re-invoke insecure init with different auth", async () => {
     const tx = await program.methods
       .insecureInitialization()
       .accounts({
