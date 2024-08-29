@@ -41,7 +41,7 @@ describe("initialization", () => {
     );
   });
 
-  it("insecureInitialization should be success", async () => {
+  it("insecureInitialization should be successful", async () => {
     await program.methods
       .insecureInitialization()
       .accounts({
@@ -50,7 +50,7 @@ describe("initialization", () => {
       .rpc();
   });
 
-  it("insecureInitialization with another authority should be success again", async () => {
+  it("insecureInitialization with a different authority should be successful again", async () => {
     const tx = await program.methods
       .insecureInitialization()
       .accounts({
