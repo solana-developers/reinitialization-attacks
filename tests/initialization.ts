@@ -1,7 +1,7 @@
 import * as anchor from "@coral-xyz/anchor";
-import { Program } from "@coral-xyz/anchor";
+import { Program, Wallet } from "@coral-xyz/anchor";
 import { expect } from "chai";
-import { Initialization } from "../target/types/initialization";
+import { Initialization } from "../../target/types/initialization";
 
 describe("initialization", () => {
   const provider = anchor.AnchorProvider.env();
@@ -9,7 +9,7 @@ describe("initialization", () => {
 
   const program = anchor.workspace.Initialization as Program<Initialization>;
 
-  const wallet = anchor.workspace.Initialization.provider.wallet;
+  const wallet = anchor.workspace.Initialization.provider.wallet as Wallet;
   const walletTwo = anchor.web3.Keypair.generate();
   const userInsecure = anchor.web3.Keypair.generate();
   const userRecommended = anchor.web3.Keypair.generate();
@@ -20,9 +20,8 @@ describe("initialization", () => {
         fromPubkey: wallet.publicKey,
         newAccountPubkey: userInsecure.publicKey,
         space: 32,
-        lamports: await provider.connection.getMinimumBalanceForRentExemption(
-          32
-        ),
+        lamports:
+          await provider.connection.getMinimumBalanceForRentExemption(32),
         programId: program.programId,
       })
     );
@@ -69,5 +68,32 @@ describe("initialization", () => {
       })
       .signers([walletTwo])
       .rpc();
+  });
+
+  it("recommendedInitialization should be successful", async () => {
+    const tx = await program.methods
+      .recommendedInitialization()
+      .accounts({
+        user: userRecommended.publicKey,
+        authority: wallet.publicKey,
+      })
+      .signers([userRecommended])
+      .rpc();
+  });
+
+  it("recommendedInitialization with a different authority should throw an expection", async () => {
+    try {
+      const tx = await program.methods
+        .recommendedInitialization()
+        .accounts({
+          user: userRecommended.publicKey,
+          authority: walletTwo.publicKey,
+        })
+        .signers([userRecommended, walletTwo])
+        .rpc();
+    } catch (err) {
+      expect(err);
+      console.log(err);
+    }
   });
 });

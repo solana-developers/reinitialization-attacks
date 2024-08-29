@@ -1,6 +1,9 @@
 use anchor_lang::prelude::*;
+use borsh::{BorshDeserialize, BorshSerialize};
 
-declare_id!("GWnpZShH6t6k5bQ26r676jcvB6HpunpWh1wMaKTLMKmY");
+declare_id!("BFDgKQuumCANxDqP84d4uBjJNxGHa7GZACBgWimnPLVj");
+
+const DISCRIMINATOR_SIZE: usize = 8;
 
 #[program]
 pub mod initialization {
@@ -12,6 +15,10 @@ pub mod initialization {
         user.serialize(&mut *ctx.accounts.user.data.borrow_mut())?;
         Ok(())
     }
+    pub fn recommended_initialization(ctx: Context<Checked>) -> Result<()> {
+        ctx.accounts.user.authority = ctx.accounts.authority.key();
+        Ok(())
+    }
 }
 
 #[derive(Accounts)]
@@ -20,6 +27,16 @@ pub struct Unchecked<'info> {
     /// CHECK:
     user: UncheckedAccount<'info>,
     authority: Signer<'info>,
+}
+
+#[derive(Accounts)]
+pub struct Checked<'info> {
+    //#[account(init, seeds = [], bump ,payer = authority, space = DISCRIMINATOR_SIZE + UserInsecure::INIT_SPACE)]
+    #[account(init,payer = authority, space = DISCRIMINATOR_SIZE + User::INIT_SPACE)]
+    user: Account<'info, User>,
+    #[account(mut)]
+    authority: Signer<'info>,
+    system_program: Program<'info, System>,
 }
 
 #[account]
