@@ -32,11 +32,19 @@ describe("initialization", () => {
       userInsecure,
     ]);
 
+    const airdropSignature = await provider.connection.requestAirdrop(
+      walletTwo.publicKey,
+      1 * anchor.web3.LAMPORTS_PER_SOL
+    );
+
+    const latestBlockHash = await provider.connection.getLatestBlockhash();
+
     await provider.connection.confirmTransaction(
-      await provider.connection.requestAirdrop(
-        walletTwo.publicKey,
-        1 * anchor.web3.LAMPORTS_PER_SOL
-      ),
+      {
+        blockhash: latestBlockHash.blockhash,
+        lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
+        signature: airdropSignature,
+      },
       "confirmed"
     );
   });
