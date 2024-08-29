@@ -1,5 +1,4 @@
 use anchor_lang::prelude::*;
-use borsh::{BorshDeserialize, BorshSerialize};
 
 declare_id!("GWnpZShH6t6k5bQ26r676jcvB6HpunpWh1wMaKTLMKmY");
 
@@ -23,7 +22,8 @@ pub struct Unchecked<'info> {
     authority: Signer<'info>,
 }
 
-#[derive(BorshSerialize, BorshDeserialize)]
+#[account]
+#[derive(InitSpace)]
 pub struct UserInsecure {
     authority: Pubkey,
 }
