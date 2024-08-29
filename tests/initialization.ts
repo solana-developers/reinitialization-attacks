@@ -11,8 +11,8 @@ describe("initialization", () => {
 
   const wallet = anchor.workspace.Initialization.provider.wallet;
   const walletTwo = anchor.web3.Keypair.generate();
-
   const userInsecure = anchor.web3.Keypair.generate();
+  const userRecommended = anchor.web3.Keypair.generate();
 
   before(async () => {
     const tx = new anchor.web3.Transaction().add(
