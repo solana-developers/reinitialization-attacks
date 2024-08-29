@@ -49,6 +49,7 @@ describe("initialization", () => {
     );
   });
 
+
   it("insecureInitialization should be successful", async () => {
     await program.methods
       .insecureInitialization()
