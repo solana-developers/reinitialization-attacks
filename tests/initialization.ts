@@ -1,7 +1,7 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program, Wallet } from "@coral-xyz/anchor";
 import { expect } from "chai";
-import { Initialization } from "../../target/types/initialization";
+import { Initialization } from "../target/types/initialization";
 
 describe("initialization", () => {
   const provider = anchor.AnchorProvider.env();
@@ -20,8 +20,9 @@ describe("initialization", () => {
         fromPubkey: wallet.publicKey,
         newAccountPubkey: userInsecure.publicKey,
         space: 32,
-        lamports:
-          await provider.connection.getMinimumBalanceForRentExemption(32),
+        lamports: await provider.connection.getMinimumBalanceForRentExemption(
+          32
+        ),
         programId: program.programId,
       })
     );
