@@ -54,20 +54,20 @@ describe("initialization", () => {
       .insecureInitialization()
       .accounts({
         user: userInsecure.publicKey,
+        authority: wallet.publicKey,
       })
+      .signers([wallet.payer])
       .rpc();
   });
 
   it("insecureInitialization with a different authority should be successful again", async () => {
-    const tx = await program.methods
+    await program.methods
       .insecureInitialization()
       .accounts({
         user: userInsecure.publicKey,
         authority: walletTwo.publicKey,
       })
-      .transaction();
-    await anchor.web3.sendAndConfirmTransaction(provider.connection, tx, [
-      walletTwo,
-    ]);
+      .signers([walletTwo])
+      .rpc();
   });
 });
