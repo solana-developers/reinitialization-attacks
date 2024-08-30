@@ -23,7 +23,8 @@ pub struct Unchecked<'info> {
     pub authority: Signer<'info>,
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
+#[account]
+#[derive(InitSpace)]
 pub struct User {
     pub authority: Pubkey,
 }
