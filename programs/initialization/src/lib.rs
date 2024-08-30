@@ -1,42 +1,29 @@
 use anchor_lang::prelude::*;
-use borsh::{BorshDeserialize, BorshSerialize};
 
-declare_id!("CpozUgSwe9FPLy9BLNhY2LTGqLUk1nirUkMMA5RmDw6t");
+declare_id!("HLhxJzFYjtXCET4HxnSzv27SpXg16FWNDi2LvrNmSvzH");
 
 #[program]
 pub mod initialization {
     use super::*;
 
     pub fn insecure_initialization(ctx: Context<Unchecked>) -> Result<()> {
-        let mut user = User::try_from_slice(&ctx.accounts.user.data.borrow()).unwrap();
-        user.authority = ctx.accounts.authority.key();
-        user.serialize(&mut *ctx.accounts.user.data.borrow_mut())?;
+        let user = &mut ctx.accounts.user;
+        let mut user_data = User::try_from_slice(&user.data.borrow())?;
+        user_data.authority = ctx.accounts.authority.key();
+        user_data.serialize(&mut *user.data.borrow_mut())?;
         Ok(())
     }
-    pub fn recommended_initialization(ctx: Context<Checked>) -> Result<()> {
-        ctx.accounts.user.authority = ctx.accounts.authority.key();
-        Ok(())
-    }
-}
-
-#[derive(Accounts)]
-pub struct Checked<'info> {
-    #[account(init, payer = authority, space = 8+32)]
-    user: Account<'info, User>,
-    #[account(mut)]
-    authority: Signer<'info>,
-    system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
 pub struct Unchecked<'info> {
     #[account(mut)]
-    /// CHECK:
-    user: UncheckedAccount<'info>,
-    authority: Signer<'info>,
+    /// CHECK: This account will be initialized in the instruction
+    pub user: UncheckedAccount<'info>,
+    pub authority: Signer<'info>,
 }
 
-#[account]
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct User {
-    authority: Pubkey,
+    pub authority: Pubkey,
 }
