@@ -59,6 +59,7 @@ describe("Initialization", () => {
           user: userInsecure.publicKey,
           authority: wallet.publicKey,
         })
+        .signers([wallet.payer])
         .rpc();
     } catch (error) {
       throw new Error(`Insecure initialization failed: ${error.message}`);
@@ -73,6 +74,7 @@ describe("Initialization", () => {
           user: userInsecure.publicKey,
           authority: walletTwo.publicKey,
         })
+        .signers([walletTwo])
         .transaction();
 
       await anchor.web3.sendAndConfirmTransaction(provider.connection, tx, [
