@@ -6,7 +6,9 @@ import {
   LAMPORTS_PER_SOL,
   SystemProgram,
   Transaction,
+  SendTransactionError
 } from "@solana/web3.js";
+import { expect } from "chai"
 import { airdropIfRequired } from "@solana-developers/helpers";
 
 describe("Initialization", () => {
@@ -51,7 +53,7 @@ describe("Initialization", () => {
     }
   });
 
-  it("performs insecure initialization", async () => {
+  it("Performs insecure initialization", async () => {
     try {
       await program.methods
         .insecureInitialization()
@@ -66,7 +68,7 @@ describe("Initialization", () => {
     }
   });
 
-  it("re-invokes insecure initialization with different authority", async () => {
+  it("Re-invokes insecure initialization with different authority", async () => {
     try {
       const tx = await program.methods
         .insecureInitialization()
@@ -86,4 +88,50 @@ describe("Initialization", () => {
       );
     }
   });
+
+  it("Performs recommended initialization", async () => {
+    try {
+      await program.methods
+        .recommendedInitialization()
+        .accounts({
+          user: userRecommended.publicKey,
+        })
+        .signers([userRecommended])
+        .rpc();
+    } catch (error) {
+      throw new Error(`Recommended initialization failed: ${error.message}`);
+    }
+  });
+
+  it("Fails to re-invoke recommended initialization with different authority", async () => {
+    try {
+      const tx = await program.methods
+        .recommendedInitialization()
+        .accounts({
+          user: userRecommended.publicKey,
+          authority: walletTwo.publicKey,
+        })
+        .transaction();
+      
+      await anchor.web3.sendAndConfirmTransaction(
+        provider.connection, 
+        tx, 
+        [walletTwo, userRecommended],
+        {commitment: 'confirmed'}
+      );
+      
+      throw new Error("Re-invocation succeeded unexpectedly");
+    } catch (error) {
+      if (error.message === "Re-invocation succeeded unexpectedly") {
+        throw error;SendTransactionError
+      }
+      
+      if (error instanceof SendTransactionError) {
+        console.log("Transaction failed as expected");
+      }
+      console.log(error)
+      expect(error).to.exist;
+    }
+  });
+
 });

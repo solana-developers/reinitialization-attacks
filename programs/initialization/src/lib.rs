@@ -2,6 +2,8 @@ use anchor_lang::prelude::*;
 
 declare_id!("HLhxJzFYjtXCET4HxnSzv27SpXg16FWNDi2LvrNmSvzH");
 
+const DISCRIMINATOR_SIZE: usize = 8;
+
 #[program]
 pub mod initialization {
     use super::*;
@@ -13,6 +15,23 @@ pub mod initialization {
         user_data.serialize(&mut *user.data.borrow_mut())?;
         Ok(())
     }
+    pub fn recommended_initialization(ctx: Context<Checked>) -> Result<()> {
+        ctx.accounts.user.authority = ctx.accounts.authority.key();
+        Ok(())
+    }
+}
+
+#[derive(Accounts)]
+pub struct Checked<'info> {
+    #[account(
+        init,
+        payer = authority,
+        space = DISCRIMINATOR_SIZE + User::INIT_SPACE
+    )]
+    user: Account<'info, User>,
+    #[account(mut)]
+    authority: Signer<'info>,
+    system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
@@ -23,7 +42,8 @@ pub struct Unchecked<'info> {
     pub authority: Signer<'info>,
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
+#[account]
+#[derive(InitSpace)]
 pub struct User {
     pub authority: Pubkey,
 }
