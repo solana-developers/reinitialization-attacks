@@ -6,9 +6,9 @@ import {
   LAMPORTS_PER_SOL,
   SystemProgram,
   Transaction,
-  SendTransactionError
+  SendTransactionError,
 } from "@solana/web3.js";
-import { expect } from "chai"
+import { expect } from "chai";
 import { airdropIfRequired } from "@solana-developers/helpers";
 
 describe("Initialization", () => {
@@ -112,26 +112,26 @@ describe("Initialization", () => {
           authority: walletTwo.publicKey,
         })
         .transaction();
-      
+
       await anchor.web3.sendAndConfirmTransaction(
-        provider.connection, 
-        tx, 
+        provider.connection,
+        tx,
         [walletTwo, userRecommended],
-        {commitment: 'confirmed'}
+        { commitment: "confirmed" }
       );
-      
+
       throw new Error("Re-invocation succeeded unexpectedly");
     } catch (error) {
       if (error.message === "Re-invocation succeeded unexpectedly") {
-        throw error;SendTransactionError
+        throw error;
+        SendTransactionError;
       }
-      
+
       if (error instanceof SendTransactionError) {
         console.log("Transaction failed as expected");
       }
-      console.log(error)
+      console.log(error);
       expect(error).to.exist;
     }
   });
-
 });
