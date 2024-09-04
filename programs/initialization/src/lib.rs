@@ -1,7 +1,8 @@
 use anchor_lang::prelude::*;
-use borsh::{BorshDeserialize, BorshSerialize};
+
 
 declare_id!("CpozUgSwe9FPLy9BLNhY2LTGqLUk1nirUkMMA5RmDw6t");
+
 
 #[program]
 pub mod initialization {
@@ -24,6 +25,7 @@ pub struct Unchecked<'info> {
 }
 
 #[account]
+#[derive(InitSpace)]
 pub struct User {
     authority: Pubkey,
 }
