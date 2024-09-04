@@ -1,14 +1,17 @@
+[toolchain]
+
 [features]
-seeds = false
+resolution = true
 skip-lint = false
+
 [programs.localnet]
-initialization = "CpozUgSwe9FPLy9BLNhY2LTGqLUk1nirUkMMA5RmDw6t"
+initialization = "BFDgKQuumCANxDqP84d4uBjJNxGHa7GZACBgWimnPLVj"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "localnet"
+cluster = "Localnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]

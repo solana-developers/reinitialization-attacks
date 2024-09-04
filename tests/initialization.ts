@@ -1,19 +1,18 @@
-import * as anchor from "@project-serum/anchor"
-import { Program } from "@project-serum/anchor"
-import { expect } from "chai"
-import { Initialization } from "../target/types/initialization"
+import * as anchor from "@coral-xyz/anchor";
+import { Program, Wallet } from "@coral-xyz/anchor";
+import { expect } from "chai";
+import { Initialization } from "../target/types/initialization";
 
 describe("initialization", () => {
-  const provider = anchor.AnchorProvider.env()
-  anchor.setProvider(provider)
+  const provider = anchor.AnchorProvider.env();
+  anchor.setProvider(provider);
 
-  const program = anchor.workspace.Initialization as Program<Initialization>
+  const program = anchor.workspace.Initialization as Program<Initialization>;
 
-  const wallet = anchor.workspace.Initialization.provider.wallet
-  const walletTwo = anchor.web3.Keypair.generate()
-
-  const userInsecure = anchor.web3.Keypair.generate()
-  const userRecommended = anchor.web3.Keypair.generate()
+  const wallet = anchor.workspace.Initialization.provider.wallet as Wallet;
+  const walletTwo = anchor.web3.Keypair.generate();
+  const userInsecure = anchor.web3.Keypair.generate();
+  const userRecommended = anchor.web3.Keypair.generate();
 
   before(async () => {
     const tx = new anchor.web3.Transaction().add(
@@ -26,71 +25,76 @@ describe("initialization", () => {
         ),
         programId: program.programId,
       })
-    )
+    );
 
     await anchor.web3.sendAndConfirmTransaction(provider.connection, tx, [
       wallet.payer,
       userInsecure,
-    ])
+    ]);
+
+    const airdropSignature = await provider.connection.requestAirdrop(
+      walletTwo.publicKey,
+      1 * anchor.web3.LAMPORTS_PER_SOL
+    );
+
+    const latestBlockHash = await provider.connection.getLatestBlockhash();
 
     await provider.connection.confirmTransaction(
-      await provider.connection.requestAirdrop(
-        walletTwo.publicKey,
-        1 * anchor.web3.LAMPORTS_PER_SOL
-      ),
+      {
+        blockhash: latestBlockHash.blockhash,
+        lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
+        signature: airdropSignature,
+      },
       "confirmed"
-    )
-  })
+    );
+  });
 
-  it("Insecure init", async () => {
+  it("insecureInitialization should be successful", async () => {
     await program.methods
       .insecureInitialization()
       .accounts({
         user: userInsecure.publicKey,
+        authority: wallet.publicKey,
       })
-      .rpc()
-  })
+      .signers([wallet.payer])
+      .rpc();
+  });
 
-  it("Re-invoke insecure init with different auth", async () => {
-    const tx = await program.methods
+  it("insecureInitialization with a different authority should be successful again", async () => {
+    await program.methods
       .insecureInitialization()
       .accounts({
         user: userInsecure.publicKey,
         authority: walletTwo.publicKey,
       })
-      .transaction()
-    await anchor.web3.sendAndConfirmTransaction(provider.connection, tx, [
-      walletTwo,
-    ])
-  })
+      .signers([walletTwo])
+      .rpc();
+  });
 
-  it("Recommended init", async () => {
-    await program.methods
+  it("recommendedInitialization should be successful", async () => {
+    const tx = await program.methods
       .recommendedInitialization()
       .accounts({
         user: userRecommended.publicKey,
+        authority: wallet.publicKey,
       })
       .signers([userRecommended])
-      .rpc()
-  })
+      .rpc();
+  });
 
-  it("Re-invoke recommended init with different auth, expect error", async () => {
+  it("recommendedInitialization with a different authority should throw an expection", async () => {
     try {
-      // Add your test here.
       const tx = await program.methods
         .recommendedInitialization()
         .accounts({
           user: userRecommended.publicKey,
           authority: walletTwo.publicKey,
         })
-        .transaction()
-      await anchor.web3.sendAndConfirmTransaction(provider.connection, tx, [
-        walletTwo,
-        userRecommended,
-      ])
+        .signers([userRecommended, walletTwo])
+        .rpc();
     } catch (err) {
-      expect(err)
-      console.log(err)
+      expect(err);
+      console.log(err);
     }
-  })
-})
+  });
+});

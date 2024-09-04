@@ -1,7 +1,9 @@
 use anchor_lang::prelude::*;
 use borsh::{BorshDeserialize, BorshSerialize};
 
-declare_id!("CpozUgSwe9FPLy9BLNhY2LTGqLUk1nirUkMMA5RmDw6t");
+declare_id!("BFDgKQuumCANxDqP84d4uBjJNxGHa7GZACBgWimnPLVj");
+
+const DISCRIMINATOR_SIZE: usize = 8;
 
 #[program]
 pub mod initialization {
@@ -20,15 +22,6 @@ pub mod initialization {
 }
 
 #[derive(Accounts)]
-pub struct Checked<'info> {
-    #[account(init, payer = authority, space = 8+32)]
-    user: Account<'info, User>,
-    #[account(mut)]
-    authority: Signer<'info>,
-    system_program: Program<'info, System>,
-}
-
-#[derive(Accounts)]
 pub struct Unchecked<'info> {
     #[account(mut)]
     /// CHECK:
@@ -36,7 +29,18 @@ pub struct Unchecked<'info> {
     authority: Signer<'info>,
 }
 
+#[derive(Accounts)]
+pub struct Checked<'info> {
+    //#[account(init, seeds = [], bump ,payer = authority, space = DISCRIMINATOR_SIZE + UserInsecure::INIT_SPACE)]
+    #[account(init,payer = authority, space = DISCRIMINATOR_SIZE + User::INIT_SPACE)]
+    user: Account<'info, User>,
+    #[account(mut)]
+    authority: Signer<'info>,
+    system_program: Program<'info, System>,
+}
+
 #[account]
+#[derive(InitSpace)]
 pub struct User {
     authority: Pubkey,
 }
