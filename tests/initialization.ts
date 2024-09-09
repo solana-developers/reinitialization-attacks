@@ -1,74 +1,100 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
-import { expect } from "chai";
 import { Initialization } from "../target/types/initialization";
+import {
+  Keypair,
+  LAMPORTS_PER_SOL,
+  SystemProgram,
+  Transaction,
+} from "@solana/web3.js";
+import { airdropIfRequired } from "@solana-developers/helpers";
 
-describe("initialization", () => {
+describe("Initialization", () => {
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
 
   const program = anchor.workspace.Initialization as Program<Initialization>;
 
-  const wallet = anchor.workspace.Initialization.provider.wallet;
-  const walletTwo = anchor.web3.Keypair.generate();
-  const userInsecure = anchor.web3.Keypair.generate();
-  const userRecommended = anchor.web3.Keypair.generate();
+  const walletAuthority = provider.wallet as anchor.Wallet;
+  const secondWallet = Keypair.generate();
+
+  const insecureUserAccount = Keypair.generate();
+  const recommendedUserAccount = Keypair.generate();
+
+  const ACCOUNT_SPACE = 32;
+  const AIRDROP_AMOUNT = 1 * LAMPORTS_PER_SOL;
+  const MINIMUM_BALANCE_FOR_RENT_EXEMPTION = 1 * LAMPORTS_PER_SOL;
 
   before(async () => {
-    const tx = new anchor.web3.Transaction().add(
-      anchor.web3.SystemProgram.createAccount({
-        fromPubkey: wallet.publicKey,
-        newAccountPubkey: userInsecure.publicKey,
-        space: 32,
-        lamports: await provider.connection.getMinimumBalanceForRentExemption(
-          32
-        ),
+    try {
+      const rentExemptionAmount =
+        await provider.connection.getMinimumBalanceForRentExemption(
+          ACCOUNT_SPACE
+        );
+
+      const createAccountInstruction = SystemProgram.createAccount({
+        fromPubkey: walletAuthority.publicKey,
+        newAccountPubkey: insecureUserAccount.publicKey,
+        space: ACCOUNT_SPACE,
+        lamports: rentExemptionAmount,
         programId: program.programId,
-      })
-    );
+      });
 
-    await anchor.web3.sendAndConfirmTransaction(provider.connection, tx, [
-      wallet.payer,
-      userInsecure,
-    ]);
+      const transaction = new Transaction().add(createAccountInstruction);
 
-    const airdropSignature = await provider.connection.requestAirdrop(
-      walletTwo.publicKey,
-      1 * anchor.web3.LAMPORTS_PER_SOL
-    );
+      await anchor.web3.sendAndConfirmTransaction(
+        provider.connection,
+        transaction,
+        [walletAuthority.payer, insecureUserAccount]
+      );
 
-    const latestBlockHash = await provider.connection.getLatestBlockhash();
-
-    await provider.connection.confirmTransaction(
-      {
-        blockhash: latestBlockHash.blockhash,
-        lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
-        signature: airdropSignature,
-      },
-      "confirmed"
-    );
+      await airdropIfRequired(
+        provider.connection,
+        secondWallet.publicKey,
+        AIRDROP_AMOUNT,
+        MINIMUM_BALANCE_FOR_RENT_EXEMPTION
+      );
+    } catch (error) {
+      console.error("Setup failed:", error);
+      throw error;
+    }
   });
 
-
-  it("insecureInitialization should be successful", async () => {
-    await program.methods
-      .insecureInitialization()
-      .accounts({
-        user: userInsecure.publicKey,
-        authority: wallet.publicKey,
-      })
-      .signers([wallet.payer])
-      .rpc();
+  it("performs insecure initialization", async () => {
+    try {
+      await program.methods
+        .insecureInitialization()
+        .accounts({
+          user: insecureUserAccount.publicKey,
+          authority: walletAuthority.publicKey,
+        })
+        .signers([walletAuthority.payer])
+        .rpc();
+    } catch (error) {
+      console.error("Insecure initialization failed:", error);
+      throw error;
+    }
   });
 
-  it("insecureInitialization with a different authority should be successful again", async () => {
-    await program.methods
-      .insecureInitialization()
-      .accounts({
-        user: userInsecure.publicKey,
-        authority: walletTwo.publicKey,
-      })
-      .signers([walletTwo])
-      .rpc();
+  it("re-invokes insecure initialization with different authority", async () => {
+    try {
+      const transaction = await program.methods
+        .insecureInitialization()
+        .accounts({
+          user: insecureUserAccount.publicKey,
+          authority: secondWallet.publicKey,
+        })
+        .signers([secondWallet])
+        .transaction();
+
+      await anchor.web3.sendAndConfirmTransaction(
+        provider.connection,
+        transaction,
+        [secondWallet]
+      );
+    } catch (error) {
+      console.error("Re-invocation of insecure initialization failed:", error);
+      throw error;
+    }
   });
 });
