@@ -6,7 +6,9 @@ import {
   LAMPORTS_PER_SOL,
   SystemProgram,
   Transaction,
+  SendTransactionError,
 } from "@solana/web3.js";
+import { expect } from "chai";
 import { airdropIfRequired } from "@solana-developers/helpers";
 
 describe("Initialization", () => {
