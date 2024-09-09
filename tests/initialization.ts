@@ -17,106 +17,118 @@ describe("Initialization", () => {
 
   const program = anchor.workspace.Initialization as Program<Initialization>;
 
-  const wallet = provider.wallet as anchor.Wallet;
-  const walletTwo = Keypair.generate();
+  const walletAuthority = provider.wallet as anchor.Wallet;
+  const secondWallet = Keypair.generate();
 
-  const userInsecure = Keypair.generate();
-  const userRecommended = Keypair.generate();
+  const insecureUserAccount = Keypair.generate();
+  const recommendedUserAccount = Keypair.generate();
+
+  const ACCOUNT_SPACE = 32;
+  const AIRDROP_AMOUNT = 1 * LAMPORTS_PER_SOL;
+  const MINIMUM_BALANCE_FOR_RENT_EXEMPTION = 1 * LAMPORTS_PER_SOL;
 
   before(async () => {
     try {
-      const tx = new Transaction().add(
-        SystemProgram.createAccount({
-          fromPubkey: wallet.publicKey,
-          newAccountPubkey: userInsecure.publicKey,
-          space: 32,
-          lamports: await provider.connection.getMinimumBalanceForRentExemption(
-            32
-          ),
-          programId: program.programId,
-        })
-      );
+      const rentExemptionAmount =
+        await provider.connection.getMinimumBalanceForRentExemption(
+          ACCOUNT_SPACE
+        );
 
-      await anchor.web3.sendAndConfirmTransaction(provider.connection, tx, [
-        wallet.payer,
-        userInsecure,
-      ]);
+      const createAccountInstruction = SystemProgram.createAccount({
+        fromPubkey: walletAuthority.publicKey,
+        newAccountPubkey: insecureUserAccount.publicKey,
+        space: ACCOUNT_SPACE,
+        lamports: rentExemptionAmount,
+        programId: program.programId,
+      });
+
+      const transaction = new Transaction().add(createAccountInstruction);
+
+      await anchor.web3.sendAndConfirmTransaction(
+        provider.connection,
+        transaction,
+        [walletAuthority.payer, insecureUserAccount]
+      );
 
       await airdropIfRequired(
         provider.connection,
-        walletTwo.publicKey,
-        1 * LAMPORTS_PER_SOL,
-        1 * LAMPORTS_PER_SOL
+        secondWallet.publicKey,
+        AIRDROP_AMOUNT,
+        MINIMUM_BALANCE_FOR_RENT_EXEMPTION
       );
     } catch (error) {
-      throw new Error(`Setup failed: ${error.message}`);
+      console.error("Setup failed:", error);
+      throw error;
     }
   });
 
-  it("Performs insecure initialization", async () => {
+  it("performs insecure initialization", async () => {
     try {
       await program.methods
         .insecureInitialization()
         .accounts({
-          user: userInsecure.publicKey,
-          authority: wallet.publicKey,
+          user: insecureUserAccount.publicKey,
+          authority: walletAuthority.publicKey,
         })
-        .signers([wallet.payer])
+        .signers([walletAuthority.payer])
         .rpc();
     } catch (error) {
-      throw new Error(`Insecure initialization failed: ${error.message}`);
+      console.error("Insecure initialization failed:", error);
+      throw error;
     }
   });
 
-  it("Re-invokes insecure initialization with different authority", async () => {
+  it("re-invokes insecure initialization with different authority", async () => {
     try {
-      const tx = await program.methods
+      const transaction = await program.methods
         .insecureInitialization()
         .accounts({
-          user: userInsecure.publicKey,
-          authority: walletTwo.publicKey,
+          user: insecureUserAccount.publicKey,
+          authority: secondWallet.publicKey,
         })
-        .signers([walletTwo])
+        .signers([secondWallet])
         .transaction();
 
-      await anchor.web3.sendAndConfirmTransaction(provider.connection, tx, [
-        walletTwo,
-      ]);
-    } catch (error) {
-      throw new Error(
-        `Re-invocation of insecure initialization failed: ${error.message}`
+      await anchor.web3.sendAndConfirmTransaction(
+        provider.connection,
+        transaction,
+        [secondWallet]
       );
+    } catch (error) {
+      console.error("Re-invocation of insecure initialization failed:", error);
+      throw error;
     }
   });
 
-  it("Performs recommended initialization", async () => {
+  it("performs recommended initialization", async () => {
     try {
       await program.methods
         .recommendedInitialization()
         .accounts({
-          user: userRecommended.publicKey,
+          user: recommendedUserAccount.publicKey,
         })
-        .signers([userRecommended])
+        .signers([recommendedUserAccount])
         .rpc();
     } catch (error) {
-      throw new Error(`Recommended initialization failed: ${error.message}`);
+      console.error("Recommended initialization failed:", error);
+      throw error;
     }
   });
 
-  it("Fails to re-invoke recommended initialization with different authority", async () => {
+  it("fails to re-invoke recommended initialization with different authority", async () => {
     try {
-      const tx = await program.methods
+      const transaction = await program.methods
         .recommendedInitialization()
         .accounts({
-          user: userRecommended.publicKey,
-          authority: walletTwo.publicKey,
+          user: recommendedUserAccount.publicKey,
+          authority: secondWallet.publicKey,
         })
         .transaction();
 
       await anchor.web3.sendAndConfirmTransaction(
         provider.connection,
-        tx,
-        [walletTwo, userRecommended],
+        transaction,
+        [secondWallet, recommendedUserAccount],
         { commitment: "confirmed" }
       );
 
@@ -124,11 +136,12 @@ describe("Initialization", () => {
     } catch (error) {
       if (error.message === "Re-invocation succeeded unexpectedly") {
         throw error;
-        SendTransactionError;
       }
 
       if (error instanceof SendTransactionError) {
         console.log("Transaction failed as expected");
+      } else {
+        console.error("Unexpected error:", error);
       }
       console.log(error);
       expect(error).to.exist;
