@@ -3,7 +3,6 @@ name = "initialization"
 version = "0.1.0"
 description = "Created with Anchor"
 edition = "2021"
-resolver = "2"
 
 [lib]
 crate-type = ["cdylib", "lib"]
